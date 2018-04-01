@@ -1,0 +1,55 @@
+{
+  "name": "elm-rings",
+  "version": "0.1.0",
+  "description": "Capture and record the state of your Elm application.",
+  "main": "./distribution/ElmRings.js",
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "precommit": "pretty-quick --staged",
+    "test": "jest"
+  },
+  "author": "Alex Koppel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:arsduo/elm-rings.git"
+  },
+  "jest": {
+    "testPathIgnorePatterns": ["<rootDir>/node_modules/"],
+    "globals": {
+      "environment": "test"
+    },
+    "testMatch": ["**/test/**/(.*)_test.js", "**/test/test.js"]
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.0.0-beta.42",
+    "@babel/core": "^7.0.0-beta.40",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.40",
+    "@babel/plugin-transform-async-to-generator": "^7.0.0-beta.40",
+    "@babel/preset-env": "^7.0.0-beta.40",
+    "autoprefixer": "^8.1.0",
+    "babel-core": "^7.0.0-0",
+    "babel-jest": "^22.4.1",
+    "babel-loader": "^8.0.0-beta.2",
+    "css-loader": "^0.28.10",
+    "elm": "^0.18.0",
+    "elm-assets-loader": "^0.3.0",
+    "elm-webpack-loader": "elm-community/elm-webpack-loader#master",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "file-loader": "^1.1.11",
+    "husky": "^0.14.3",
+    "jest": "^22.4.0",
+    "jest-webpack-resolver": "^0.3.0",
+    "prettier": "^1.10.2",
+    "pretty-quick": "^1.2.0",
+    "simple-progress-webpack-plugin": "^1.0.4",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.10",
+    "webpack-dev-server": "^3.1.1",
+    "webpack-manifest-plugin": "^2.0.0-rc.2",
+    "webpack-merge": "^4.1.2"
+  },
+  "engines": {
+    "node": ">= 6"
+  }
+}
