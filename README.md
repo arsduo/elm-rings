@@ -1,4 +1,4 @@
-# elm-rings
+# elm-rings [![Build Status](https://travis-ci.org/arsduo/elm-rings.svg?branch=master)](https://travis-ci.org/arsduo/elm-rings)
 
 _Programmatically capture the state of your Elm application as your users use it_
 
