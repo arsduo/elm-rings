@@ -24,25 +24,24 @@ var ElmRings =
   /*#__PURE__*/
   (function() {
     function ElmRings(_ref) {
-      var containerElement = _ref.containerElement,
-        allowDownload = _ref.allowDownload,
+      var allowDownload = _ref.allowDownload,
         shouldSendHistory = _ref.shouldSendHistory,
         storeHistory = _ref.storeHistory,
         trackingFrequency = _ref.trackingFrequency;
+      var body =
+        arguments.length > 1 && arguments[1] !== undefined
+          ? arguments[1]
+          : document.body;
 
       _classCallCheck(this, ElmRings);
 
-      this.containerElement = containerElement;
+      // we allow the body to be passed in to ensure that we can test all behavior
+      // in normal usage this should never be necessary
+      this.body = body;
 
-      if (!this.containerElement) {
+      if (!this.body.querySelectorAll) {
         throw new Error(
-          "You must supply a DOM node as containerElement to ElmRings!"
-        );
-      }
-
-      if (!this.containerElement.querySelectorAll) {
-        throw new Error(
-          "The DOM node supplied as containerElement to ElmRings must support querySelectorAll!"
+          "This browser doesn't support querySelectorAll -- unable to capture Elm history via ElmRings."
         );
       }
 
@@ -57,19 +56,16 @@ var ElmRings =
       this.trackingFrequency = trackingFrequency || 60000; // ensure that when the callback is called, we still have access to our settings
 
       this.handleHistoryExport = this.handleHistoryExport.bind(this);
-      this.triggerHistoryExport = this.triggerHistoryExport.bind(this);
+      this.exportHistory = this.exportHistory.bind(this);
     }
 
     _createClass(ElmRings, [
       {
         key: "startTracking",
         value: function startTracking() {
-          this.containerElement.addEventListener(
-            "click",
-            this.handleHistoryExport
-          );
+          this.body.addEventListener("click", this.handleHistoryExport);
           this.trackingInterval = setInterval(
-            this.triggerHistoryExport,
+            this.exportHistory,
             this.trackingFrequency
           );
         }
@@ -84,8 +80,8 @@ var ElmRings =
         }
       },
       {
-        key: "triggerHistoryExport",
-        value: function triggerHistoryExport() {
+        key: "exportHistory",
+        value: function exportHistory() {
           var _this = this;
 
           // if the user is no longer logged in, don't try to get/post the history
@@ -93,7 +89,7 @@ var ElmRings =
             return;
           }
 
-          var exportButton = this.containerElement.querySelectorAll(
+          var exportButton = this.body.querySelectorAll(
             ".elm-mini-controls-import-export span"
           )[1];
 
@@ -120,13 +116,14 @@ var ElmRings =
           if (target.href && unescape(target.href).match(/{"elm":"0.18/)) {
             // Elm delivers the data in the format
             // 'data:' + mime + ',' + encodeURIComponent(jsonString));
-            var historyData = unescape(target.href.split(/,/)[1]);
+            var historyData = unescape(target.href.split(/,/)[1]); // we have to post this data in Javascript, since doing so in Elm would cause the
+
+            this.storeHistory(historyData);
 
             if (!this.allowDownload) {
               event.preventDefault();
-            } // we have to post this data in Javascript, since doing so in Elm would cause the
+            }
 
-            this.storeHistory(historyData);
             return this.allowDownload;
           }
         }
