@@ -10,7 +10,9 @@ What if we could see our apps through our users’ eyes?
 
 With [the Elm language](http://elm-lang.org), we can. One of the most amazing features of that language is its powerful debugger. Because all the possible states of an Elm program are defined and state only changes in response to messages, Elm can track everything that happens -- and make it available to you to debug.
 
-Elm doesn't natively provide an interface to extract this data programmatically, but don't worry: that's where ElmRings comes in. **ElmRings is a lightweight, dependency-free library** that lets you record and process the command history of your app as your users use it. Upload and store this info and presto! When something goes wrong you can see exactly what happened.
+Elm doesn't natively provide an interface to extract this data programmatically, but don't worry: that's where ElmRings comes in. **ElmRings is a lightweight, dependency-free library** that lets you record and process the command history of your app as your users use it. Upload and store this info and presto! Now when you get a confusing support ticket, you can download the history and see your app through your users' eyes.
+
+<img src="https://user-images.githubusercontent.com/48325/38286735-7b1be558-378c-11e8-97b4-6b95ff37946c.gif" width="600" />
 
 **Make sure to read the Caveats section below.**
 
@@ -72,7 +74,7 @@ To run the example locally:
 
 The example in action:
 
-![elm-history-tracking](https://user-images.githubusercontent.com/48325/38286082-0ce989c6-3789-11e8-9c4c-3a99f51bbf79.gif)
+<img src="https://user-images.githubusercontent.com/48325/38286776-be7899d6-378c-11e8-97ae-f789992cac50.gif" width="600" />
 
 ## Caveats
 
