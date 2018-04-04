@@ -1,11 +1,13 @@
 export default class ElmRings {
-  constructor({
-    allowDownload,
-    shouldSendHistory,
-    storeHistory,
-    trackingFrequency
-  }) {
-    if (!document.body.querySelectorAll) {
+  constructor(
+    { allowDownload, shouldSendHistory, storeHistory, trackingFrequency },
+    body = document.body
+  ) {
+    // we allow the body to be passed in to ensure that we can test all behavior
+    // in normal usage this should never be necessary
+    this.body = body;
+
+    if (!this.body.querySelectorAll) {
       throw new Error(
         "This browser doesn't support querySelectorAll -- unable to capture Elm history via ElmRings."
       );
@@ -24,7 +26,7 @@ export default class ElmRings {
   }
 
   startTracking() {
-    document.body.addEventListener("click", this.handleHistoryExport);
+    this.body.addEventListener("click", this.handleHistoryExport);
     this.trackingInterval = setInterval(
       this.exportHistory,
       this.trackingFrequency
@@ -44,7 +46,7 @@ export default class ElmRings {
       return;
     }
 
-    const exportButton = document.body.querySelectorAll(
+    const exportButton = this.body.querySelectorAll(
       ".elm-mini-controls-import-export span"
     )[1];
 
@@ -57,7 +59,7 @@ export default class ElmRings {
     exportButton.click();
     // the setTimeout is necessary for Firefox; otherwise the allowDownload value will get
     // restored before the click handler, causing download prompts
-    setTimeout(() => (this.allowDownload = oldAllow), 100);
+    setTimeout(() => (this.allowDownload = oldAllow), 50);
   }
 
   handleHistoryExport(event) {

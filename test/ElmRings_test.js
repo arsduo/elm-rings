@@ -1,12 +1,12 @@
 import ElmRings from "../source/ElmRings.js";
 
 describe("ElmRings", () => {
-  let containerElement, elmButton, elmElmRings;
+  let mockBody, elmButton, elmElmRings;
 
   beforeEach(() => {
     jest.useFakeTimers();
 
-    containerElement = {
+    mockBody = {
       querySelectorAll: jest.fn(() => [null, elmButton]),
       addEventListener: jest.fn()
     };
@@ -14,91 +14,87 @@ describe("ElmRings", () => {
     elmButton = { click: jest.fn() };
 
     // default setup; individual tests may change this
-    elmElmRings = new ElmRings({
-      containerElement,
-      allowDownload: true,
-      shouldSendHistory: () => true,
-      storeHistory: jest.fn()
-    });
+    elmElmRings = new ElmRings(
+      {
+        allowDownload: true,
+        shouldSendHistory: () => true,
+        storeHistory: jest.fn()
+      },
+      mockBody
+    );
   });
 
-  it("requires a containerElement that supports querySelectorAll", () => {
+  it("requires a mockBody that supports querySelectorAll", () => {
     expect(
       () =>
-        new ElmRings({
-          allowDownload: true,
-          shouldSendHistory: () => true,
-          storeHistory: jest.fn()
-        })
-    ).toThrow();
-    expect(
-      () =>
-        new ElmRings({
-          containerElement: {},
-          allowDownload: true,
-          shouldSendHistory: () => true,
-          storeHistory: jest.fn()
-        })
+        new ElmRings(
+          {
+            allowDownload: true,
+            shouldSendHistory: () => true,
+            storeHistory: jest.fn()
+          },
+          {}
+        )
     ).toThrow();
   });
 
   describe("startTracking", () => {
     it("starts tracking", () => {
       elmElmRings.startTracking();
-      expect(containerElement.addEventListener).toHaveBeenCalledWith(
+      expect(mockBody.addEventListener).toHaveBeenCalledWith(
         "click",
         elmElmRings.handleHistoryExport
       );
     });
 
     it("sets a the recording interval to a minute by default", () => {
-      elmElmRings.triggerHistoryExport = jest.fn();
+      elmElmRings.exportHistory = jest.fn();
       elmElmRings.startTracking();
 
       jest.advanceTimersByTime(60000 - 1);
-      expect(elmElmRings.triggerHistoryExport).not.toHaveBeenCalled();
+      expect(elmElmRings.exportHistory).not.toHaveBeenCalled();
       jest.advanceTimersByTime(2);
-      expect(elmElmRings.triggerHistoryExport).toHaveBeenCalled();
+      expect(elmElmRings.exportHistory).toHaveBeenCalled();
       jest.advanceTimersByTime(60000);
-      expect(elmElmRings.triggerHistoryExport.mock.calls.length).toEqual(2);
+      expect(elmElmRings.exportHistory.mock.calls.length).toEqual(2);
     });
 
     it("allows control over the interval", () => {
       elmElmRings = new ElmRings({
-        containerElement,
+        mockBody,
         trackingFrequency: 10,
         shouldSendHistory: jest.fn(() => true),
         storeHistory: jest.fn()
       });
-      elmElmRings.triggerHistoryExport = jest.fn();
+      elmElmRings.exportHistory = jest.fn();
       elmElmRings.startTracking();
 
       jest.advanceTimersByTime(9);
-      expect(elmElmRings.triggerHistoryExport).not.toHaveBeenCalled();
+      expect(elmElmRings.exportHistory).not.toHaveBeenCalled();
       jest.advanceTimersByTime(2);
-      expect(elmElmRings.triggerHistoryExport).toHaveBeenCalled();
+      expect(elmElmRings.exportHistory).toHaveBeenCalled();
       jest.advanceTimersByTime(10);
-      expect(elmElmRings.triggerHistoryExport.mock.calls.length).toEqual(2);
+      expect(elmElmRings.exportHistory.mock.calls.length).toEqual(2);
     });
   });
 
   describe("stopTracking", () => {
     it("stops tracking", () => {
-      elmElmRings.triggerHistoryExport = jest.fn();
+      elmElmRings.exportHistory = jest.fn();
       elmElmRings.startTracking();
 
       jest.advanceTimersByTime(60000);
-      expect(elmElmRings.triggerHistoryExport).toHaveBeenCalled();
+      expect(elmElmRings.exportHistory).toHaveBeenCalled();
 
       elmElmRings.stopTracking();
       jest.advanceTimersByTime(60000);
-      expect(elmElmRings.triggerHistoryExport.mock.calls.length).toEqual(1);
+      expect(elmElmRings.exportHistory.mock.calls.length).toEqual(1);
     });
   });
 
-  describe("triggerHistoryExport", () => {
+  describe("exportHistory", () => {
     it("triggers the history export", () => {
-      elmElmRings.triggerHistoryExport();
+      elmElmRings.exportHistory();
       expect(elmButton.click).toHaveBeenCalled();
     });
 
@@ -110,7 +106,7 @@ describe("ElmRings", () => {
       expect(elmElmRings.allowDownload).toBe(true);
 
       // make sure we triggered the assertion
-      elmElmRings.triggerHistoryExport();
+      elmElmRings.exportHistory();
       expect(elmButton.click).toHaveBeenCalled();
 
       // now ensure we reset it
@@ -120,19 +116,19 @@ describe("ElmRings", () => {
 
     it("won't send if shouldSendHistory return false", () => {
       elmElmRings = new ElmRings({
-        containerElement,
+        mockBody,
         allowDownload: true,
         shouldSendHistory: () => false,
         storeHistory: jest.fn()
       });
 
-      elmElmRings.triggerHistoryExport();
+      elmElmRings.exportHistory();
       expect(elmButton.click).not.toHaveBeenCalled();
     });
 
     it("won't crash if there is no button", () => {
-      containerElement.querySelectorAll = () => [];
-      elmElmRings.triggerHistoryExport();
+      mockBody.querySelectorAll = () => [];
+      elmElmRings.exportHistory();
       expect(elmButton.click).not.toHaveBeenCalled();
     });
   });
@@ -168,7 +164,7 @@ describe("ElmRings", () => {
 
       it("stops you from downloading history if allowDownload is disabled", () => {
         elmElmRings = new ElmRings({
-          containerElement,
+          mockBody,
           allowDownload: false,
           shouldSendHistory: () => true,
           storeHistory: jest.fn()
