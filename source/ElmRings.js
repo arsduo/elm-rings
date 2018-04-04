@@ -1,20 +1,13 @@
 export default class ElmRings {
   constructor({
-    containerElement,
     allowDownload,
     shouldSendHistory,
     storeHistory,
     trackingFrequency
   }) {
-    this.containerElement = containerElement;
-    if (!this.containerElement) {
+    if (!document.body.querySelectorAll) {
       throw new Error(
-        "You must supply a DOM node as containerElement to ElmRings!"
-      );
-    }
-    if (!this.containerElement.querySelectorAll) {
-      throw new Error(
-        "The DOM node supplied as containerElement to ElmRings must support querySelectorAll!"
+        "This browser doesn't support querySelectorAll -- unable to capture Elm history via ElmRings."
       );
     }
 
@@ -27,13 +20,13 @@ export default class ElmRings {
 
     // ensure that when the callback is called, we still have access to our settings
     this.handleHistoryExport = this.handleHistoryExport.bind(this);
-    this.triggerHistoryExport = this.triggerHistoryExport.bind(this);
+    this.exportHistory = this.exportHistory.bind(this);
   }
 
   startTracking() {
-    this.containerElement.addEventListener("click", this.handleHistoryExport);
+    document.body.addEventListener("click", this.handleHistoryExport);
     this.trackingInterval = setInterval(
-      this.triggerHistoryExport,
+      this.exportHistory,
       this.trackingFrequency
     );
   }
@@ -45,13 +38,13 @@ export default class ElmRings {
     }
   }
 
-  triggerHistoryExport() {
+  exportHistory() {
     // if the user is no longer logged in, don't try to get/post the history
     if (!this.shouldSendHistory()) {
       return;
     }
 
-    const exportButton = this.containerElement.querySelectorAll(
+    const exportButton = document.body.querySelectorAll(
       ".elm-mini-controls-import-export span"
     )[1];
 
@@ -64,7 +57,7 @@ export default class ElmRings {
     exportButton.click();
     // the setTimeout is necessary for Firefox; otherwise the allowDownload value will get
     // restored before the click handler, causing download prompts
-    setTimeout(() => (this.allowDownload = oldAllow), 50);
+    setTimeout(() => (this.allowDownload = oldAllow), 100);
   }
 
   handleHistoryExport(event) {
@@ -76,13 +69,12 @@ export default class ElmRings {
       // 'data:' + mime + ',' + encodeURIComponent(jsonString));
       const historyData = unescape(target.href.split(/,/)[1]);
 
-      if (!this.allowDownload) {
-        event.preventDefault();
-      }
-
       // we have to post this data in Javascript, since doing so in Elm would cause the
       this.storeHistory(historyData);
 
+      if (!this.allowDownload) {
+        event.preventDefault();
+      }
       return this.allowDownload;
     }
   }
