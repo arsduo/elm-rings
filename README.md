@@ -1,18 +1,32 @@
 # elm-rings [![Build Status](https://travis-ci.org/arsduo/elm-rings.svg?branch=master)](https://travis-ci.org/arsduo/elm-rings)
 
-_Programmatically capture the state of your Elm application as your users use it_
+_Programmatically record the state of your Elm application as your users use it_
 
 If you've ever received a support ticket, you've probably seen something like this: "Carmen M. can't complete her quiz, it's not affecting any other students". Great. Was she unable to select answers to the questions? Able to answer but the submit button stays disabled? Able to tap submit but to no avail?
 
 Users don’t submit detailed or complete error reports because they don’t experience or describe an app the same way its developers do. Nor should they! They have better things to do than learn our lingo.
 
-What if we could see our apps through our users’ eyes?
+But what if we could see our apps through our users’ eyes?
 
-With [the Elm language](http://elm-lang.org), we can. One of the most amazing features of that language is its powerful debugger. Because all the possible states of an Elm program are defined and state only changes in response to messages, Elm can track everything that happens -- and make it available to you to debug.
-
-Elm doesn't natively provide an interface to extract this data programmatically, but don't worry: that's where ElmRings comes in. **ElmRings is a lightweight, dependency-free library** that lets you record and process the command history of your app as your users use it. Upload and store this info and presto! Now when you get a confusing support ticket, you can download the history and see your app through your users' eyes.
+With [the Elm language](http://elm-lang.org), we can. One of the most amazing features of that language is its powerful debugger. Because all the possible states of an Elm program are defined and state only changes in response to messages, Elm can track everything that happens -- and make it available to you to debug. You can analyze that history and even import it into your own session to exactly reproduce another user's state, as in this example:
 
 <img src="https://user-images.githubusercontent.com/48325/38286735-7b1be558-378c-11e8-97b4-6b95ff37946c.gif" width="600" />
+
+Unfortunately, Elm doesn't natively provide an interface to extract this data programmatically.
+This means you have to walk your users through exporting a history file and emailing it to you,
+which is slow and annoying and also risky -- any sensitive data they've entered is now permanently
+committed to email.
+
+What if we could automatically snag a copy of that history and process it securely?
+
+Enter **ElmRings, a lightweight, dependency-free library to record the command history of your Elm app** behind the scenes.
+
+With ElmRings, you can record the history periodically during a user's session, anytime you
+experience an error, however you want to do it. This data becomes an invaluable tool for debugging
+and supporting user issues -- when you get a confusing support ticket, you can download the history
+and see your app through your users' eyes.
+
+😎
 
 **Make sure to read the Caveats section below.**
 
