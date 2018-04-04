@@ -72,7 +72,7 @@ To run the example locally:
 
 The example in action:
 
-![elm-history-tracking](https://user-images.githubusercontent.com/48325/38285660-e7e9a22a-3786-11e8-8b90-0aa6c919b453.gif)
+![elm-history-tracking](https://user-images.githubusercontent.com/48325/38286082-0ce989c6-3789-11e8-9c4c-3a99f51bbf79.gif)
 
 ## Caveats
 
