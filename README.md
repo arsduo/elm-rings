@@ -100,7 +100,7 @@ Every keystroke of a user's password or the sensitive personal information they 
 
 Depending on your app, there may also be **performance implications** to using debug mode. I haven’t measured when those would occur, but if you're designing a game or an app that would have hundreds or thousands or yet more entries for the average user session, the amount of data processed and stored in memory might severely impede performance.
 
-Given those two caveats, you may well decide, like us, to only capture state for particular users. It's on for everyone in our first few classrooms, but we’ll gate it behind a feature flag as we roll out eSpark 5.0 more generally. The big drawback of that approach, of course, is that we can't proactively know who will encounter an error — it'll be difficult to capture info on hard-to-reproduce problems.
+Given those two caveats, you may well decide, like us, to only capture state for particular users. The big drawback of that approach, of course, is that we can't proactively know who will encounter an error — it'll be difficult to capture info on hard-to-reproduce problems.
 
 Finally, there's one issue that's both obvious and worth stating explicitly: **the Elm history only captures what happens in Elm**. If your app is all Elm, you're golden; if like us, though, you do fun things like in-browser video recording with WebRTC (more on that soon), integrate with third-party Javascript libraries, or for depend on significant JS functionality for any reason, you'll have blind spots in your log. For this and many many other reasons, the more you can put in Elm, the better.
 
