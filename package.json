@@ -4,7 +4,9 @@
   "description": "Capture and record the state of your Elm application.",
   "main": "./distribution/ElmRings.js",
   "scripts": {
-    "build": "babel src --out-dir dist",
+    "build": "babel source --out-dir distribution",
+    "example":
+      "yarn run webpack-dev-server --config example/webpack.config.js --watch",
     "precommit": "pretty-quick --staged",
     "test": "jest"
   },
@@ -37,12 +39,15 @@
     "elm-webpack-loader": "elm-community/elm-webpack-loader#master",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^1.1.11",
+    "html-webpack-plugin": "^3.1.0",
     "husky": "^0.14.3",
     "jest": "^22.4.0",
     "jest-webpack-resolver": "^0.3.0",
+    "json-formatter-js": "^2.2.0",
     "prettier": "^1.10.2",
     "pretty-quick": "^1.2.0",
     "simple-progress-webpack-plugin": "^1.0.4",
+    "url-loader": "^1.0.1",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.10",
     "webpack-dev-server": "^3.1.1",
