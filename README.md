@@ -30,7 +30,7 @@ and see your app through your users' eyes.
 
 Installing `elm-rings` is pretty straightforward:
 
-```
+```bash
 yarn add elm-rings
 # or
 npm install elm-rings
@@ -107,7 +107,7 @@ How do you actually do this?
 Elm's history has to represent its powerful type system in JSON, so the data structure isn't
 simple. Each history entry looks something like this:
 
-```json
+```js
 {"ctor":"LoginMessage","_0":{"ctor":"UpdateLoginUsername","_0":"f"}
 ```
 
