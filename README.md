@@ -2,26 +2,22 @@
 
 _Programmatically record the state of your Elm application as your users use it_
 
-If you've ever received a support ticket, you've probably seen something like this: "Carmen M. can't complete her quiz, it's not affecting any other students". Great. Was she unable to select answers to the questions? Able to answer but the submit button stays disabled? Able to tap submit but to no avail?
+If you’ve ever received a support ticket, you’ve seen something like this: “Carmen M. can’t complete her quiz, it’s not affecting any other students”. Great. Was she unable to select answers to the questions? Able to answer but the submit button stays disabled? Able to tap submit but to no avail?
 
 Users don’t submit detailed or complete error reports because they don’t experience or describe an app the same way its developers do. Nor should they! They have better things to do than learn our lingo.
 
 But what if we could see our apps through our users’ eyes?
 
-With [the Elm language](http://elm-lang.org), we can. One of the most amazing features of that language is its powerful debugger. Because all the possible states of an Elm program are defined and state only changes in response to messages, Elm can track everything that happens -- and make it available to you to debug. You can analyze that history and even import it into your own session to exactly reproduce another user's state, as in this example:
+With [the Elm language](http://elm-lang.org), we can. Because all the possible states of an Elm program are clearly defined and state only changes in response to messages, Elm can track everything that happens -- and make it available to you to debug. You can even export that history and even import it another session to see exactly what your users saw:
 
 <img src="https://user-images.githubusercontent.com/48325/38286735-7b1be558-378c-11e8-97b4-6b95ff37946c.gif" width="600" />
 
 Unfortunately, Elm doesn't natively provide an interface to extract this data programmatically.
-This means you have to walk your users through exporting a history file and emailing it to you,
-which is slow and annoying and also risky -- any sensitive data they've entered is now permanently
-committed to email.
-
-What if we could automatically snag a copy of that history and process it securely?
+Fortunately, we can work around that.
 
 Enter **ElmRings, a lightweight, dependency-free library to record the command history of your Elm app** behind the scenes.
 
-With ElmRings, you can record the history periodically during a user's session, anytime you
+With ElmRings, you can snapshot the history periodically during a user's session, anytime you
 experience an error, however you want to do it. This data becomes an invaluable tool for debugging
 and supporting user issues -- when you get a confusing support ticket, you can download the history
 and see your app through your users' eyes.
@@ -77,7 +73,7 @@ recorder.exportHistory();
 
 ## Example
 
-Want to see ElmRings in action? Check out [this site](to be determined) to see how you can use ElmRings to capture and display an Elm app's history. This is all in the browser (no backend), but you can imagine how you could send the data to your server and display the results on a support page if you'd like.
+Want to see ElmRings in action? Check out the example app! It's all in the browser, but you can imagine how you could send the data to your server and display the results on a support page if you'd like.
 
 To run the example locally:
 
@@ -94,26 +90,79 @@ The example in action:
 
 Of course, there are caveats.
 
-The biggest one — the reason you shouldn't rush out to implement this for everyone right now — are the **security risks**. Exposing all the internals of your app and the complete history of a user's session carries big risks.
+* **Data security:** every keystroke of a user’s password and all the sensitive personal information they enter in your app go into Elm’s history. It’s no good hashing passwords on the user model if another table contains them in plain text — you need to sanitize and secure this data carefully if you store it. (This is discussed further in the ElmRings readme.)
+* **Performance:** an app that generates a lot of entries may well run into performance problems eventually., especially on lower-powered hardware (such as the Chromebooks or iPads schools use). I haven’t measured when those would occur, but if you’re storing a lot of data or generating a flood of events, keep that in mind. (I’d be grateful for any data!)
+* **Exposing your internals:** with debug mode enabled your users (and, in theory, any Javascript on your page to see exactly what data your app stores and how it’s structured. All front end applications have to assume any data is open to the world, but this makes it unusually accessible.
 
-Every keystroke of a user's password or the sensitive personal information they enter in your app go into the history; with debug mode enabled, **any Javascript on your page** could click the button and grab that info. (Plus, you need to sanitize and secure these histories properly when stored — it's no good hashing passwords on the user model if another table contains them in plain text.) See **Sanitizing Incoming Data** below.
+Given those caveats, you may decide (like us) to only capture state for particular users for whom a flag is enabled. The big drawback of that approach is that you can’t proactively know who will encounter an error — it’ll be difficult to capture hard-to-reproduce problems.
 
-Depending on your app, there may also be **performance implications** to using debug mode. I haven’t measured when those would occur, but if you're designing a game or an app that would have hundreds or thousands or yet more entries for the average user session, the amount of data processed and stored in memory might severely impede performance.
-
-Given those two caveats, you may well decide, like us, to only capture state for particular users. It's on for everyone in our first few classrooms, but we’ll gate it behind a feature flag as we roll out eSpark 5.0 more generally. The big drawback of that approach, of course, is that we can't proactively know who will encounter an error — it'll be difficult to capture info on hard-to-reproduce problems.
-
-Finally, there's one issue that's both obvious and worth stating explicitly: **the Elm history only captures what happens in Elm**. If your app is all Elm, you're golden; if like us, though, you do fun things like in-browser video recording with WebRTC (more on that soon), integrate with third-party Javascript libraries, or for depend on significant JS functionality for any reason, you'll have blind spots in your log. For this and many many other reasons, the more you can put in Elm, the better.
+There’s one additional limitation that’s both obvious and worth stating explicitly: the Elm history only captures what happens in Elm. If your app is all Elm, you’re golden. If you’re integrating with Javascript libraries to do fun things like in-browser video recording with Javascript and WebRTC (more on that soon), you’ll have blind spots in your log. For this and many many other reasons, the more you can put in Elm the better.
 
 ## Sanitizing Incoming Data
 
-Every keystroke of a user's password or the sensitive personal information they enter in your app go into the Elm history and thus, with ElmRings, potentially into your database. **Be careful you don't accidentally expose critical user information** -- it's no good hashing passwords on the user model if another table contains them in plain text. (Plus, with debug mode enabled, any Javascript you load on your page could click the button and grab the history.)
+Every keystroke of a user's password or the sensitive personal information they enter in your app go into the Elm history and thus if you're not careful, your database. **Be careful you don't accidentally expose critical user information** -- it's no good hashing passwords on the user model if another table contains them in plain text.
 
-The safest approach is to sanitize the history data before it ever leaves your user's machine, but you can also do this on the backend; different languages and frameworks will have tools you can use to clean the incoming data. Here's an example of what to do if you're using Rails as your backend:
+How do you actually do this?
+
+Elm's history has to represent its powerful type system in JSON, so the data structure isn't
+simple. Each history entry looks something like this:
+
+```json
+{"ctor":"LoginMessage","_0":{"ctor":"UpdateLoginUsername","_0":"f"}
+```
+
+which represents the Elm message
+
+```elm
+-- LoginMessage (UpdateLoginUsername String)
+LoginMessage (UpdateLoginUsername "f")
+```
+
+Each Elm type is identified by its constructor (`ctor`) and a set of arguments to that constructor,
+each of which can be either a simple value (`"f"`) or a further Elm data type.
+
+Given that complexity, you can't just throw the whole thing into existing sanitization tools like
+Rails' `ActionDispatch::Http::ParameterFilter`. Rather than try to build something elaborate and
+fully automated, we've gone with a more explicit, enumerated approach:
+
+```ruby
+# This is pseudo-code; an open-source gem / example implementation is coming soon.
+def sanitize_history(history_data)
+  history_data["history"].map do |entry|
+    if matches_sensitive_keyword?(entry["ctor"])
+      sanitized_entry(entry)
+    else
+      entry
+    end
+  end
+end
+
+def sanitized_entry(entry)
+  if entry["ctor"] == "UpdateUserPassword"
+    entry["_0"] = "[FILTERED]"
+  elsif entry["ctor"] == "UserDataReceived"
+    # remove access token
+    entry["_1"]["_0"] = "[FILTERED]"
+  # ...
+  else
+    raise UnableToSanitizeElmHistoryEntry.new(entry["ctor"])
+  end
+end
+```
+
+While this imposes a certain maintenance burden, it seems like a reasonable cost for the benefit.
+
+Of course, storing the data in a sanitized format _does_ limit your ability to import it into your app for debugging. One solution (which we're pursuing) is a limited history rehydrator that will insert temporary access tokens on demand for our support team. (You could encrypt the history in a reversible way in the database, though I don't feel comfortable recommending that.)
+
+**In your own logs**
+
+You'll want to make sure that the history data doesn't end up in your own logs, too. In Rails, for
+instance, you'll want to filter out the history you send up and also hide the database statements:
 
 ```ruby
 # in application.rb, add the appropriate parameter to Rails' built-in log filtering to ensure all the data doesn't get written to the log
 # you could, alternatively, add all the individual fields you want to sanitize (password, token, US social security number, etc.) if you do want the history in the log
-# but that does create a lot of data/noise in your logs over time
+# but that does create a lot of data/noise over time
 config.filter_parameters += [:elm_history]
 
 # in your controller
@@ -122,28 +171,21 @@ def store_history
   # both for security and (often more pressingly in development) to keep your logs manageable
   old_logger = ActiveRecord::Base.logger
   begin
-    old_logger.info "ActiveRecord logging disabled for app state log"
+    old_logger.info "ActiveRecord logging disabled for Elm history logging"
+    # disable database logging
     ActiveRecord::Base.logger = nil
 
     history_data = params.require(:elm_history)
 
-    # You can use where().first_or_initialize if you'd like to only track one history record per user/etc.
-    history_record = ElmHistoryModel.new(some_params)
+    sanitized_history = sanitize_history(history_data)
+    save_history!(sanitized_history)
 
-    # sanitize the incoming data before it goes in the database
-    sanitizer = ActionDispatch::Http::ParameterFilter.new(Rails.application.config.filter_parameters)
-    history_record.data = sanitizer.filter(history_data)
-
-    # save the record, send back whatever response you'd like
-    history_record.save!
     render json: {result: "stored"}
   ensure
     ActiveRecord::Base.logger = old_logger
   end
 end
 ```
-
-Of course, storing the data in a sanitized format _does_ limit your ability to import it into your app for debugging. One solution (which we're pursuing) is a limited history rehydrator that will insert temporary access tokens on demand for our support team. (You could encrypt the history in a reversible way in the database, though I don't feel comfortable recommending that.)
 
 ## Contributing
 
