@@ -90,7 +90,7 @@ The example in action:
 
 Of course, there are caveats.
 
-* **Data security:** every keystroke of a user’s password and all the sensitive personal information they enter in your app go into Elm’s history. It’s no good hashing passwords on the user model if another table contains them in plain text — you need to sanitize and secure this data carefully if you store it. (This is discussed further in the ElmRings readme.)
+* **Data security:** every keystroke of a user’s password and all the sensitive personal information they enter in your app go into Elm’s history. It’s no good hashing passwords on the user model if another table contains them in plain text — you need to sanitize and secure this data carefully if you store it.
 * **Performance:** an app that generates a lot of entries may well run into performance problems eventually., especially on lower-powered hardware (such as the Chromebooks or iPads schools use). I haven’t measured when those would occur, but if you’re storing a lot of data or generating a flood of events, keep that in mind. (I’d be grateful for any data!)
 * **Exposing your internals:** with debug mode enabled your users (and, in theory, any Javascript on your page to see exactly what data your app stores and how it’s structured. All front end applications have to assume any data is open to the world, but this makes it unusually accessible.
 
