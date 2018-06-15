@@ -1,6 +1,16 @@
+import sanitizeElmHistory from "./HistorySanitizer.js";
+
 export default class ElmRings {
   constructor(
-    { allowDownload, shouldSendHistory, storeHistory, trackingFrequency },
+    {
+      allowDownload,
+      shouldSendHistory,
+      storeHistory,
+      trackingFrequency,
+      watchWords,
+      historySanitizer,
+      playDangerousWithData
+    },
     body = document.body
   ) {
     // we allow the body to be passed in to ensure that we can test all behavior
@@ -19,6 +29,14 @@ export default class ElmRings {
     this.storeHistory = storeHistory;
     // default to tracking every minute
     this.trackingFrequency = trackingFrequency || 60000;
+
+    this.historySanitizer = historySanitizer;
+    this.watchWords = watchWords;
+    if ((!historySanitizer || !watchWords) && !playDangerousWithData) {
+      console.warn(
+        "ElmRings was not provided both watchWords and historySanitizer, so sensitive data will remain in your history exports. This is probably a bad idea -- be careful!"
+      );
+    }
 
     // ensure that when the callback is called, we still have access to our settings
     this.handleHistoryExport = this.handleHistoryExport.bind(this);
@@ -71,8 +89,21 @@ export default class ElmRings {
       // 'data:' + mime + ',' + encodeURIComponent(jsonString));
       const historyData = unescape(target.href.split(/,/)[1]);
 
-      // we have to post this data in Javascript, since doing so in Elm would cause the
-      this.storeHistory(historyData);
+      if (this.watchWords && this.historySanitizer) {
+        // sanitize the history before passing it on
+        const historyObject = JSON.parse(historyData);
+
+        const sanitizedHistory = sanitizeElmHistory(
+          historyObject,
+          this.watchWords,
+          this.historySanitizer
+        );
+
+        this.storeHistory(JSON.stringify(sanitizedHistory));
+      } else {
+        // pass the data on to the user to do with as they like
+        this.storeHistory(historyData);
+      }
 
       if (!this.allowDownload) {
         event.preventDefault();
