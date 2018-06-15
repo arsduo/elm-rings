@@ -1,7 +1,7 @@
 module Counter exposing (..)
 
-import Html exposing (Html, div, button, text, input)
-import Html.Attributes exposing (value)
+import Html exposing (Html, div, span, button, text, input)
+import Html.Attributes exposing (value, style)
 import Html.Events exposing (onClick, onInput)
 
 
@@ -23,18 +23,20 @@ type Msg
 view : Model -> Html Msg
 view model =
     div []
-        [ button
-            [ onClick Decrement ]
-            [ text "-" ]
-        , div
-            []
-            [ text (toString model.counter) ]
-        , button [ onClick Increment ]
-            [ text "+" ]
-        , div []
+        [ div []
+            [ button
+                [ onClick Decrement ]
+                [ text "-" ]
+            , span
+                []
+                [ text (toString model.counter) ]
+            , button [ onClick Increment ]
+                [ text "+" ]
+            ]
+        , div [ style [ ( "margin-top", "15px" ) ] ]
             [ div [] [ text "Super secret field" ]
-            , div [] [ text ("Current value: " ++ model.secretField) ]
             , input [ onInput UpdateSecretField, value model.secretField ] []
+            , div [ style [ ( "font-size", "0.8em" ) ] ] [ text ("Current value: " ++ model.secretField) ]
             ]
         ]
 
