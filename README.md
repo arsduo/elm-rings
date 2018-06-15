@@ -113,17 +113,18 @@ ElmRing's sanitization is done by the `sanitizeElmHistory` function in
 `source/HistorySanitizer.js`. If we were to run
 
 ```js
-//   sanitizeElmHistory(historyData, ["MySecretData", "password"], function(elmObjectOrRecord) {
-//    if (elmObjectOrRecord.ctor == "MySecretData") {
-//      // replace the access token
-//      // make sure to return the updated object!
-//      return {...elmObjectOrRecord, "_0": "[FILTERED]"}
-//    }
-//    else {
-//      // we have a record, replace the password field
-//      return {...elmObjectOrRecord, "password": "[FILTERED]"}
-//    }
-//  })
+sanitizeElmHistory(historyData, ["MySecretData", "password"], function(
+  elmObjectOrRecord
+) {
+  if (elmObjectOrRecord.ctor == "MySecretData") {
+    // replace the access token
+    // make sure to return the updated object!
+    return { ...elmObjectOrRecord, _0: "[FILTERED]" };
+  } else {
+    // we have a record, replace the password field
+    return { ...elmObjectOrRecord, password: "[FILTERED]" };
+  }
+});
 ```
 
 We'll receive back a sanitized entry:
