@@ -18,6 +18,12 @@ const elmHistoryRecorder = new ElmRings({
     ).render();
     newNode.id = "history";
     document.getElementById("history").replaceWith(newNode);
+  },
+  watchWords: ["secret"],
+  historySanitizer: elmObjectOrRecord => {
+    if (elmObjectOrRecord.ctor == "UpdateSecretField") {
+      return { ...elmObjectOrRecord, _0: "[HIDDEN FROM YOUR PRYING EYES]" };
+    }
   }
 });
 
