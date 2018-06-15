@@ -1,6 +1,6 @@
 {
   "name": "elm-rings",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Capture and record the state of your Elm application.",
   "main": "./distribution/ElmRings.js",
   "scripts": {
