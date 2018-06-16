@@ -24,9 +24,7 @@ and see your app through your users' eyes.
 
 😎
 
-**Make sure to read the Caveats section below.**
-
-## Installation and Usage
+## Installation
 
 Installing `elm-rings` is pretty straightforward:
 
@@ -35,6 +33,10 @@ yarn add elm-rings
 # or
 npm install elm-rings
 ```
+
+## Usage
+
+### Capturing History
 
 And add code like this to your application wherever you initialize the Elm app you want to listen to:
 
@@ -50,18 +52,27 @@ const elmHistoryRecorder = new ElmRings({
   // whether users shoud be allowed to download/export the history on their own
   // default: true
   allowDownload: true,
+
   // if you'd like to capture history on an interval, you can set this value in milliseconds and ElmRings will automatically report appropriately
   // if set to a falsy value (false, null, 0, etc.) history will only be exported when you explicitly call `exportHistory`
   // default: 60000 (e.g. 60 seconds)
   trackingFrequency: 30000,
+
   // a function that determines whether to record the history at any given point. (You may choose to only record it under certain circumstances, such as a user being logged in.)
   // default: true (always record)
   shouldSendHistory: isUserLoggedIn,
+
   // a function that's called each time ElmRings grabs the Elm history
   // send it to a server, process it locally, whatever you'd like
   storeHistory: historyDataAsJsonString => {
     sendToServer(historyDataAsJsonString);
-  }
+  },
+
+  // Any Elm object constructor names or record keys that contain sensitive data.
+  // These will be passed to a sanitizing function you provide.
+  // See the next section for more details.
+  watchWords: ["password", "token"],
+  historySanitizer: mySanitizingFunction
 });
 
 // start tracking history
@@ -70,6 +81,63 @@ recorder.startTracking();
 // manually trigger a history export, which will be passed to the function you specify in storeHistory
 recorder.exportHistory();
 ```
+
+_Note_: it's not a good idea to pass the Elm history object back into Elm in your `storeHistory`
+method. Things get real big real fast.
+
+### Sanitizing History
+
+Of course, once you have that history data in hand, you'll also have a big challenge: **security**.
+
+Every keystroke of a user’s password and all the sensitive personal information they enter in your app go into Elm’s history. It’s no good hashing passwords on the user model if you're sending them unencrypted over the network (even via HTTPS) or storing them in plain text in a logging table. **You need to sanitize this data carefully before you cit.**
+
+Fortunately, ElmRings is comes with a built-in mechanism to sanitize this data before it leaves the
+browser. Because every Elm program is different, there's no one-size-fits-all way to clean up the
+data -- you'll need to think through your data structures and you'll want to write some tests.
+
+Let's say you have an Elm message like
+
+```elm
+MySecretData "access_token" {password = "myP@ssw0rd", expiration = "tomorrow"}
+```
+
+As an Elm history entry, this will look like
+
+```js
+{"ctor": "MySecretData", "_0": "access_token", "_1": {"password": "myP@ssw0rd", "expiration": "tomorrow"}}
+```
+
+For more information on the format Elm uses to export debugging history data, see an upcoming blog post.
+
+ElmRing's sanitization is done by the `sanitizeElmHistory` function in
+`source/HistorySanitizer.js`. If we were to run
+
+```js
+sanitizeElmHistory(historyData, ["MySecretData", "password"], function(
+  elmObjectOrRecord
+) {
+  if (elmObjectOrRecord.ctor == "MySecretData") {
+    // replace the access token
+    // make sure to return the updated object!
+    return { ...elmObjectOrRecord, _0: "[FILTERED]" };
+  } else {
+    // we have a record, replace the password field
+    return { ...elmObjectOrRecord, password: "[FILTERED]" };
+  }
+});
+```
+
+We'll receive back a sanitized entry:
+
+```js
+{"ctor": "MySecretData", "_0": "[FILTERED]", "_1": {"password": "[FILTERED]", "expiration": "tomorrow"}}
+```
+
+If you specify the `watchWords` and `historySanitizer` function, ElmRings will automatically
+process the entry before it's passed to your `storeHistory` function.
+
+Sanitization is _highly_ encouraged; ElmRings will log a warning to your console if it's not set
+up (though you can silence this if you really want to `playDangerousWithData`).
 
 ## Example
 
@@ -88,9 +156,8 @@ The example in action:
 
 ## Caveats
 
-Of course, there are caveats.
+Of course, there are caveats, even after you clean the history of sensitive data.
 
-* **Data security:** every keystroke of a user’s password and all the sensitive personal information they enter in your app go into Elm’s history. It’s no good hashing passwords on the user model if another table contains them in plain text — you need to sanitize and secure this data carefully if you store it.
 * **Performance:** an app that generates a lot of entries may well run into performance problems eventually., especially on lower-powered hardware (such as the Chromebooks or iPads schools use). I haven’t measured when those would occur, but if you’re storing a lot of data or generating a flood of events, keep that in mind. (I’d be grateful for any data!)
 * **Exposing your internals:** with debug mode enabled your users (and, in theory, any Javascript on your page to see exactly what data your app stores and how it’s structured. All front end applications have to assume any data is open to the world, but this makes it unusually accessible.
 
@@ -98,66 +165,14 @@ Given those caveats, you may decide (like us) to only capture state for particul
 
 There’s one additional limitation that’s both obvious and worth stating explicitly: the Elm history only captures what happens in Elm. If your app is all Elm, you’re golden. If you’re integrating with Javascript libraries to do fun things like in-browser video recording with Javascript and WebRTC (more on that soon), you’ll have blind spots in your log. For this and many many other reasons, the more you can put in Elm the better.
 
-## Sanitizing Incoming Data
-
-Every keystroke of a user's password or the sensitive personal information they enter in your app go into the Elm history and thus if you're not careful, your database. **Be careful you don't accidentally expose critical user information** -- it's no good hashing passwords on the user model if another table contains them in plain text.
-
-How do you actually do this?
-
-Elm's history has to represent its powerful type system in JSON, so the data structure isn't
-simple. Each history entry looks something like this:
-
-```js
-{"ctor":"LoginMessage","_0":{"ctor":"UpdateLoginUsername","_0":"f"}
-```
-
-which represents the Elm message
-
-```elm
--- LoginMessage (UpdateLoginUsername String)
-LoginMessage (UpdateLoginUsername "f")
-```
-
-Each Elm type is identified by its constructor (`ctor`) and a set of arguments to that constructor,
-each of which can be either a simple value (`"f"`) or a further Elm data type.
-
-Given that complexity, you can't just throw the whole thing into existing sanitization tools like
-Rails' `ActionDispatch::Http::ParameterFilter`. Rather than try to build something elaborate and
-fully automated, we've gone with a more explicit, enumerated approach:
-
-```ruby
-# This is pseudo-code; an open-source gem / example implementation is coming soon.
-def sanitize_history(history_data)
-  history_data["history"].map do |entry|
-    if matches_sensitive_keyword?(entry["ctor"])
-      sanitized_entry(entry)
-    else
-      entry
-    end
-  end
-end
-
-def sanitized_entry(entry)
-  if entry["ctor"] == "UpdateUserPassword"
-    entry["_0"] = "[FILTERED]"
-  elsif entry["ctor"] == "UserDataReceived"
-    # remove access token
-    entry["_1"]["_0"] = "[FILTERED]"
-  # ...
-  else
-    raise UnableToSanitizeElmHistoryEntry.new(entry["ctor"])
-  end
-end
-```
-
-While this imposes a certain maintenance burden, it seems like a reasonable cost for the benefit.
-
-Of course, storing the data in a sanitized format _does_ limit your ability to import it into your app for debugging. One solution (which we're pursuing) is a limited history rehydrator that will insert temporary access tokens on demand for our support team. (You could encrypt the history in a reversible way in the database, though I don't feel comfortable recommending that.)
-
 **In your own logs**
 
-You'll want to make sure that the history data doesn't end up in your own logs, too. In Rails, for
-instance, you'll want to filter out the history you send up and also hide the database statements:
+You'll want to make sure that the history data doesn't end up in your own logs, too. Even though it
+will be already sanitized, it's quite verbose and annoying.
+
+Different backend applications will handle this differently. In Rails, for
+instance, you can to filter out the history you send up and also hide the database statements like
+so:
 
 ```ruby
 # in application.rb, add the appropriate parameter to Rails' built-in log filtering to ensure all the data doesn't get written to the log
