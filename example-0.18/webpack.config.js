@@ -53,6 +53,7 @@ module.exports = {
                 loader: require.resolve("elm-webpack-loader"),
                 options: {
                   verbose: true,
+                  warn: true,
                   debug: true,
                   forceWatch: true,
                   cwd: __dirname

@@ -1,9 +1,9 @@
 // index.js
 "use strict";
 
-import { Elm } from "./Main.elm";
+import Elm from "./counter.elm";
 const mountNode = document.getElementById("elm-app");
-const app = Elm.Main.init({ node: document.getElementById("elm-app") });
+const app = Elm.Counter.embed(mountNode);
 
 import ElmRings from "../source/ElmRings.js";
 import JSONFormatter from "json-formatter-js";
@@ -21,9 +21,8 @@ const elmHistoryRecorder = new ElmRings({
   },
   watchWords: ["secret"],
   historySanitizer: elmObjectOrRecord => {
-    // in 0.18, $ => ctor and a: => _0:
-    if (elmObjectOrRecord.$ == "UpdateSecretField") {
-      return { ...elmObjectOrRecord, a: "[HIDDEN FROM YOUR PRYING EYES]" };
+    if (elmObjectOrRecord.ctor == "UpdateSecretField") {
+      return { ...elmObjectOrRecord, _0: "[HIDDEN FROM YOUR PRYING EYES]" };
     }
   }
 });
