@@ -151,22 +151,71 @@ describe("ElmRings", () => {
 
   describe("handleHistoryExport", () => {
     let event, target;
-    const historyData = {
-      metadata: { versions: { elm: "0.18.0" } },
-      types: {},
-      history: []
-    };
-
     const mimeType = "application/json";
 
-    beforeEach(() => {
-      target = {
-        href: `data:${mimeType},${escape(JSON.stringify(historyData))}`
+    describe("if this is a 0.19 Elm history export", () => {
+      const historyData = {
+        metadata: { versions: { elm: "0.19.0" } },
+        types: {},
+        history: []
       };
-      event = { target, preventDefault: jest.fn() };
+
+      beforeEach(() => {
+        target = {
+          href: `data:${mimeType},${escape(JSON.stringify(historyData))}`
+        };
+        event = { target, preventDefault: jest.fn() };
+      });
+
+      it("fires the callback with the sanitized history", () => {
+        elmRings.handleHistoryExport(event);
+        expect(elmRingsOptions.storeHistory).toHaveBeenCalledWith(
+          JSON.stringify({ sanitized: historyData, watchWords })
+        );
+        expect(historySanitizer).toHaveBeenCalled();
+      });
+
+      it("will fire the callback with unsanitized history data if no sanitization options provided", () => {
+        new ElmRings(
+          { ...elmRingsOptions, historySanitizer: null },
+          mockBody
+        ).handleHistoryExport(event);
+        expect(elmRingsOptions.storeHistory).toHaveBeenCalledWith(
+          JSON.stringify(historyData)
+        );
+      });
+
+      it("won't stop you from downloading history if allowDownload is enabled", () => {
+        expect(elmRings.handleHistoryExport(event)).not.toBe(false);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+      });
+
+      it("stops you from downloading history if allowDownload is disabled", () => {
+        elmRings = new ElmRings({
+          mockBody,
+          allowDownload: false,
+          shouldSendHistory: () => true,
+          storeHistory: jest.fn()
+        });
+        expect(elmRings.handleHistoryExport(event)).toBe(false);
+        expect(event.preventDefault).toHaveBeenCalled();
+      });
     });
 
-    describe("if this is an Elm history export", () => {
+    describe("if this is a 0.18 Elm history export", () => {
+      const historyData = {
+        metadata: { versions: { elm: "0.18.0" } },
+        types: {},
+        history: []
+      };
+
+      beforeEach(() => {
+        target = {
+          href: `data:${mimeType},${escape(JSON.stringify(historyData))}`
+        };
+        event = { target, preventDefault: jest.fn() };
+      });
+
       it("fires the callback with the sanitized history", () => {
         elmRings.handleHistoryExport(event);
         expect(elmRingsOptions.storeHistory).toHaveBeenCalledWith(
@@ -203,15 +252,17 @@ describe("ElmRings", () => {
     });
 
     describe("if it's not an Elm history export", () => {
-      it("won't do anything on other links", () => {
-        target.href = "http://google.com";
+      it.only("won't do anything on other links", () => {
+        target = { href: "http://google.com" };
+        event = { target, preventDefault: jest.fn() };
         expect(elmRings.handleHistoryExport(event)).not.toBe(false);
         expect(elmRings.storeHistory).not.toHaveBeenCalled();
         expect(event.preventDefault).not.toHaveBeenCalled();
       });
 
       it("won't do anything on clicks on other types of data", () => {
-        delete target.href;
+        target = {};
+        event = { target, preventDefault: jest.fn() };
         expect(elmRings.handleHistoryExport(event)).not.toBe(false);
         expect(elmRings.storeHistory).not.toHaveBeenCalled();
         expect(event.preventDefault).not.toHaveBeenCalled();

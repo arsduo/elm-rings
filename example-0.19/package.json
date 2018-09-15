@@ -1,33 +1,10 @@
 {
-  "name": "elm-rings",
+  "name": "elm-spa-example-webpack",
   "version": "0.2.0",
-  "description": "Capture and record the state of your Elm application.",
-  "main": "./distribution/ElmRings.js",
+  "description": "",
   "scripts": {
     "build": "babel source --out-dir distribution",
-    "example": "yarn run webpack-dev-server --config example-0.19/webpack.config.js --watch",
-    "example18": "yarn run webpack-dev-server --config example-0.18/webpack.config.js --watch",
-    "precommit": "pretty-quick --staged",
-    "test": "jest"
-  },
-  "author": "Alex Koppel",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:arsduo/elm-rings.git"
-  },
-  "jest": {
-    "testURL": "http://localhost/",
-    "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/"
-    ],
-    "globals": {
-      "environment": "test"
-    },
-    "testMatch": [
-      "**/test/**/(.*)_test.js",
-      "**/test/test.js"
-    ]
+    "server": "yarn run webpack-dev-server --config webpack.config.js --watch"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0-beta.42",
@@ -49,7 +26,7 @@
     "husky": "^0.14.3",
     "jest": "^22.4.0",
     "jest-webpack-resolver": "^0.3.0",
-    "json-formatter-js": "^2.2.0",
+    "json-formatter-js": "^2.2.1",
     "prettier": "^1.10.2",
     "pretty-quick": "^1.2.0",
     "simple-progress-webpack-plugin": "^1.0.4",
@@ -65,6 +42,7 @@
   },
   "dependencies": {
     "elm-format": "0.8.0",
+    "elm-rings": "../elm-rings",
     "elm-upgrade": "^0.19.1"
   }
 }
