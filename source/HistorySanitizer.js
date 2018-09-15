@@ -6,7 +6,7 @@
 // either an Elm object constructor or as an Elm record key, the callback will be called with that
 // object or record. The callback's return value will be substituted for the original data.
 //
-//  As each ELm app will have such different entry structures that there's no easy to generalize this completely. The sanitizing function will have to detect what the content is and clean it appropriately.
+//  As each Elm app will have such different entry structures that there's no easy to generalize this completely. The sanitizing function will have to detect what the content is and clean it appropriately.
 //
 //  For more information on the format Elm uses to export debugging history data, see an upcoming
 //  blog post.
@@ -17,14 +17,16 @@
 //   // MySecretData "access_token" {password = "myP@ssw0rd", expiration = "tomorrow"}
 //
 //   // As an Elm history entry, this will look like
+//   {"$": "MySecretData", "a": "access_token", "b": {"password": "myP@ssw0rd", "expiration": "tomorrow"}}
+//   // for 0.18, replace $, a, b, etc. with ctor, _0, _1, etc.
 //   {"ctor": "MySecretData", "_0": "access_token", "_1": {"password": "myP@ssw0rd", "expiration": "tomorrow"}}
 //
 //   // If we run
 //   sanitizeElmHistory(historyData, ["MySecretData", "password"], function(elmObjectOrRecord) {
-//    if (elmObjectOrRecord.ctor == "MySecretData") {
+//    if (elmObjectOrRecord.$ == "MySecretData") {
 //      // replace the access token
 //      // make sure to return the updated object!
-//      return {...elmObjectOrRecord, "_0": "[FILTERED]"}
+//      return {...elmObjectOrRecord, "a": "[FILTERED]"}
 //    }
 //    else {
 //      // we have the record
@@ -33,7 +35,7 @@
 //  })
 //
 //  // We'll receive back a sanitized entry:
-//  {"ctor": "MySecretData", "_0": "[FILTERED]", "_1": {"password": "[FILTERED]", "expiration": "tomorrow"}}
+//  {"$": "MySecretData", "a": "[FILTERED]", "b": {"password": "[FILTERED]", "expiration": "tomorrow"}}
 
 import { transformObject } from "./Utils.js";
 
@@ -49,17 +51,33 @@ export default function sanitizeElmHistory(
     return word;
   });
 
-  return {
-    ...historyData,
-    history: historyData.history.map(entry =>
-      sanitizeObject(entry, watchWords, sanitizingCallback)
-    )
+  const processData = historyEntries => {
+    return historyEntries.map(entry => {
+      return sanitizeObject(entry, watchWords, sanitizingCallback);
+    });
   };
+
+  if (historyData.a) {
+    // 0.19 stores the data inside an Elm object, which we have to reconstruct
+    return {
+      ...historyData,
+      a: {
+        ...historyData.a,
+        history: processData(historyData.a.history)
+      }
+    };
+  } else {
+    // 0.18 is simpler
+    return {
+      ...historyData,
+      history: processData(historyData.history)
+    };
+  }
 }
 
 function sanitizeObject(object, watchWords, sanitizingCallback) {
   return transformObject(object, elmObject => {
-    const constructor = elmObject.ctor;
+    const constructor = elmObject.ctor || elmObject.$;
     // these are history entries, so they should have a constructor
     if (!constructor) {
       throw new Error(
@@ -73,7 +91,7 @@ function sanitizeObject(object, watchWords, sanitizingCallback) {
     const cleanedObject = {};
     Object.keys(elmObject).forEach(key => {
       const value = elmObject[key];
-      if (value.ctor) {
+      if (value.ctor || value.$) {
         // we have an Elm object provided as an argument, so clean it
         cleanedObject[key] = sanitizeObject(
           value,
@@ -101,6 +119,7 @@ function sanitizeObject(object, watchWords, sanitizingCallback) {
 
     // now that we've sanitized any inner records or objects, sanitize the overall object (if
     // needed)
+
     if (watchWords.find(matcher => matcher.test(constructor))) {
       return sanitizingCallback(cleanedObject);
     }

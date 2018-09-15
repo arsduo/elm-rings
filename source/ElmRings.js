@@ -64,9 +64,21 @@ export default class ElmRings {
       return;
     }
 
-    const exportButton = this.body.querySelectorAll(
+    // 0.18
+    let exportButton = this.body.querySelectorAll(
       ".elm-mini-controls-import-export span"
     )[1];
+
+    if (!exportButton) {
+      // in 0.19, we don't have classes, so we have to figure it out by DOM structure and content 🧐
+      // also, NodeList doesn't support Array functions like find 🤪
+      const exportButtonCandidates = Array.prototype.slice.call(
+        this.body.querySelectorAll("div > div > span")
+      );
+      exportButton = exportButtonCandidates.find(candidate => {
+        return candidate.innerHTML === "Export";
+      });
+    }
 
     if (!exportButton) {
       return;
@@ -84,7 +96,7 @@ export default class ElmRings {
     const target = event.target;
     // see if we're downloading data from Elm 0.18.x
     // assuming that the history export format won't change in a patch version 🤞
-    if (target.href && unescape(target.href).match(/{"elm":"0.18/)) {
+    if (target.href && unescape(target.href).match(/{"elm":/)) {
       // Elm delivers the data in the format
       // 'data:' + mime + ',' + encodeURIComponent(jsonString));
       const historyData = unescape(target.href.split(/,/)[1]);

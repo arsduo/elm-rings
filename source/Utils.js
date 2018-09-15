@@ -5,9 +5,11 @@
 // the block -- to examine/alter an Elm record, do so in the callback for whichever Elm object
 // contains it. (All history entries are Message objects, so there's always an entry point.)
 export function transformObject(entry, transformation) {
-  if (typeof entry != "object") {
+  if (!entry) {
     return entry;
-  } else if (entry.ctor) {
+  } else if (typeof entry != "object") {
+    return entry;
+  } else if (entry.ctor || entry.$) {
     // If you want to walk down sub-entries, call transformObject again within your transform
     // function
     return transformation(entry);

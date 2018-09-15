@@ -1,6 +1,6 @@
 # elm-rings [![Build Status](https://travis-ci.org/arsduo/elm-rings.svg?branch=master)](https://travis-ci.org/arsduo/elm-rings)
 
-_Programmatically record the state of your Elm application as your users use it_
+_Programmatically record the state of your Elm application as your users use it in Elm 0.19 and 0.18_
 
 If you’ve ever received a support ticket, you’ve seen something like this: “Carmen M. can’t complete her quiz, it’s not affecting any other students”. Great. Was she unable to select answers to the questions? Able to answer but the submit button stays disabled? Able to tap submit but to no avail?
 
@@ -38,7 +38,7 @@ npm install elm-rings
 
 ### Capturing History
 
-And add code like this to your application wherever you initialize the Elm app you want to listen to:
+And add code like this to your application wherever you initialize the Elm app you want to listen to.
 
 ```javascript
 import ElmRings from "javascript/ElmRings.js";
@@ -104,6 +104,9 @@ MySecretData "access_token" {password = "myP@ssw0rd", expiration = "tomorrow"}
 As an Elm history entry, this will look like
 
 ```js
+// 0.19
+{"$": "MySecretData", "a": "access_token", "b": {"password": "myP@ssw0rd", "expiration": "tomorrow"}}
+// 0.18
 {"ctor": "MySecretData", "_0": "access_token", "_1": {"password": "myP@ssw0rd", "expiration": "tomorrow"}}
 ```
 
@@ -116,10 +119,11 @@ ElmRing's sanitization is done by the `sanitizeElmHistory` function in
 sanitizeElmHistory(historyData, ["MySecretData", "password"], function(
   elmObjectOrRecord
 ) {
-  if (elmObjectOrRecord.ctor == "MySecretData") {
+  // for 0.18, replace $ with ctor and a with _1
+  if (elmObjectOrRecord.$ == "MySecretData") {
     // replace the access token
     // make sure to return the updated object!
-    return { ...elmObjectOrRecord, _0: "[FILTERED]" };
+    return { ...elmObjectOrRecord, a: "[FILTERED]" };
   } else {
     // we have a record, replace the password field
     return { ...elmObjectOrRecord, password: "[FILTERED]" };
@@ -130,7 +134,7 @@ sanitizeElmHistory(historyData, ["MySecretData", "password"], function(
 We'll receive back a sanitized entry:
 
 ```js
-{"ctor": "MySecretData", "_0": "[FILTERED]", "_1": {"password": "[FILTERED]", "expiration": "tomorrow"}}
+{"$": "MySecretData", "a": "[FILTERED]", "b": {"password": "[FILTERED]", "expiration": "tomorrow"}}
 ```
 
 If you specify the `watchWords` and `historySanitizer` function, ElmRings will automatically
@@ -141,25 +145,47 @@ up (though you can silence this if you really want to `playDangerousWithData`).
 
 ## Example
 
-Want to see ElmRings in action? Check out the example app! It's all in the browser, but you can imagine how you could send the data to your server and display the results on a support page if you'd like.
+Want to see ElmRings in action?
+
+#### 0.18
+
+If you're using 0.18, you can check out the example app! It's all in the browser, but you can imagine how you could send the data to your server and display the results on a support page if you'd like.
+
+To run the example locally:
+
+1.  Check out the repo
+2.  Run `yarn install && elm-package install`
+3.  Run `yarn example18`
+4.  Visit [http://localhost:8080/example18/](http://localhost:8080/example18/)
+
+The example in action:
+
+<img src="https://user-images.githubusercontent.com/48325/38286776-be7899d6-378c-11e8-97ae-f789992cac50.gif" width="600" />
+
+#### 0.19
+
+If you're on 0.19, I've adapted a copy of @rtfeldman's [Elm SPA
+example](https://github.com/rtfeldman/elm-spa-example/) to work with ElmRings. (The ElmRings
+example app is blocked by an apparent bug in [Elm 0.19's debug
+mode](https://github.com/elm/compiler/issues/1799).) It's less flashy, but it's all there.
 
 To run the example locally:
 
 1.  Check out the repo
 2.  Run `yarn install && elm-package install`
 3.  Run `yarn example`
-4.  Visit [http://localhost:8080](http://localhost:8080)
+4.  Visit [http://localhost:8080/example19/](http://localhost:8080/example19/)
+5.  Open the browser console to see the history output
+6.  Click on a tag and verify that the next history export sanitized which tag you chose
 
-The example in action:
-
-<img src="https://user-images.githubusercontent.com/48325/38286776-be7899d6-378c-11e8-97ae-f789992cac50.gif" width="600" />
+![elm-rings-0 19](https://user-images.githubusercontent.com/48325/45588143-6bbea080-b8d5-11e8-8f20-7f3c6dcde817.gif)
 
 ## Caveats
 
 Of course, there are caveats, even after you clean the history of sensitive data.
 
-* **Performance:** an app that generates a lot of entries may well run into performance problems eventually., especially on lower-powered hardware (such as the Chromebooks or iPads schools use). I haven’t measured when those would occur, but if you’re storing a lot of data or generating a flood of events, keep that in mind. (I’d be grateful for any data!)
-* **Exposing your internals:** with debug mode enabled your users (and, in theory, any Javascript on your page to see exactly what data your app stores and how it’s structured. All front end applications have to assume any data is open to the world, but this makes it unusually accessible.
+- **Performance:** an app that generates a lot of entries may well run into performance problems eventually., especially on lower-powered hardware (such as the Chromebooks or iPads schools use). I haven’t measured when those would occur, but if you’re storing a lot of data or generating a flood of events, keep that in mind. (I’d be grateful for any data!)
+- **Exposing your internals:** with debug mode enabled your users (and, in theory, any Javascript on your page to see exactly what data your app stores and how it’s structured. All front end applications have to assume any data is open to the world, but this makes it unusually accessible.
 
 Given those caveats, you may decide (like us) to only capture state for particular users for whom a flag is enabled. The big drawback of that approach is that you can’t proactively know who will encounter an error — it’ll be difficult to capture hard-to-reproduce problems.
 
@@ -212,8 +238,8 @@ When filing an issue, please include a good description of what's happening and 
 
 When submitting a pull request:
 
-* make sure that all tests pass when running `yarn test`
-* write a good description of the problem your code solves
+- make sure that all tests pass when running `yarn test`
+- write a good description of the problem your code solves
 
 Please note that this project is released with a Contributor Code of Conduct. By participating in
 this project you agree to abide by its terms. See
