@@ -1,7 +1,7 @@
 {
   "name": "elm-rings",
-  "version": "0.2.0",
-  "description": "Capture and record the state of your Elm application.",
+  "version": "0.3.0",
+  "description": "Capture and record the state of your Elm application in Elm 0.19 and 0.18.",
   "main": "./distribution/ElmRings.js",
   "scripts": {
     "build": "babel source --out-dir distribution",

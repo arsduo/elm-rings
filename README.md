@@ -1,6 +1,6 @@
 # elm-rings [![Build Status](https://travis-ci.org/arsduo/elm-rings.svg?branch=master)](https://travis-ci.org/arsduo/elm-rings)
 
-_Programmatically record the state of your Elm application as your users use it in Elm 0.18 and 0.19_
+_Programmatically record the state of your Elm application as your users use it in Elm 0.19 and 0.18_
 
 If you’ve ever received a support ticket, you’ve seen something like this: “Carmen M. can’t complete her quiz, it’s not affecting any other students”. Great. Was she unable to select answers to the questions? Able to answer but the submit button stays disabled? Able to tap submit but to no avail?
 
