@@ -1,3 +1,8 @@
+# 0.3.1
+
+- Actually build and publish the updated code
+-
+
 # 0.3.0
 
 - Add support for 0.19

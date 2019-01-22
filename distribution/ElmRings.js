@@ -20,6 +20,8 @@ function _createClass(Constructor, protoProps, staticProps) {
   return Constructor;
 }
 
+import sanitizeElmHistory from "./HistorySanitizer.js";
+
 var ElmRings =
   /*#__PURE__*/
   (function() {
@@ -27,7 +29,10 @@ var ElmRings =
       var allowDownload = _ref.allowDownload,
         shouldSendHistory = _ref.shouldSendHistory,
         storeHistory = _ref.storeHistory,
-        trackingFrequency = _ref.trackingFrequency;
+        trackingFrequency = _ref.trackingFrequency,
+        watchWords = _ref.watchWords,
+        historySanitizer = _ref.historySanitizer,
+        playDangerousWithData = _ref.playDangerousWithData;
       var body =
         arguments.length > 1 && arguments[1] !== undefined
           ? arguments[1]
@@ -53,7 +58,15 @@ var ElmRings =
 
       this.storeHistory = storeHistory; // default to tracking every minute
 
-      this.trackingFrequency = trackingFrequency || 60000; // ensure that when the callback is called, we still have access to our settings
+      this.trackingFrequency = trackingFrequency || 60000;
+      this.historySanitizer = historySanitizer;
+      this.watchWords = watchWords;
+
+      if ((!historySanitizer || !watchWords) && !playDangerousWithData) {
+        console.warn(
+          "ElmRings was not provided both watchWords and historySanitizer, so sensitive data will remain in your history exports. This is probably a bad idea -- be careful!"
+        );
+      } // ensure that when the callback is called, we still have access to our settings
 
       this.handleHistoryExport = this.handleHistoryExport.bind(this);
       this.exportHistory = this.exportHistory.bind(this);
@@ -87,11 +100,22 @@ var ElmRings =
           // if the user is no longer logged in, don't try to get/post the history
           if (!this.shouldSendHistory()) {
             return;
-          }
+          } // 0.18
 
           var exportButton = this.body.querySelectorAll(
             ".elm-mini-controls-import-export span"
           )[1];
+
+          if (!exportButton) {
+            // in 0.19, we don't have classes, so we have to figure it out by DOM structure and content 🧐
+            // also, NodeList doesn't support Array functions like find 🤪
+            var exportButtonCandidates = Array.prototype.slice.call(
+              this.body.querySelectorAll("div > div > span")
+            );
+            exportButton = exportButtonCandidates.find(function(candidate) {
+              return candidate.innerHTML === "Export";
+            });
+          }
 
           if (!exportButton) {
             return;
@@ -113,12 +137,24 @@ var ElmRings =
           var target = event.target; // see if we're downloading data from Elm 0.18.x
           // assuming that the history export format won't change in a patch version 🤞
 
-          if (target.href && unescape(target.href).match(/{"elm":"0.18/)) {
+          if (target.href && unescape(target.href).match(/{"elm":/)) {
             // Elm delivers the data in the format
             // 'data:' + mime + ',' + encodeURIComponent(jsonString));
-            var historyData = unescape(target.href.split(/,/)[1]); // we have to post this data in Javascript, since doing so in Elm would cause the
+            var historyData = unescape(target.href.split(/,/)[1]);
 
-            this.storeHistory(historyData);
+            if (this.watchWords && this.historySanitizer) {
+              // sanitize the history before passing it on
+              var historyObject = JSON.parse(historyData);
+              var sanitizedHistory = sanitizeElmHistory(
+                historyObject,
+                this.watchWords,
+                this.historySanitizer
+              );
+              this.storeHistory(JSON.stringify(sanitizedHistory));
+            } else {
+              // pass the data on to the user to do with as they like
+              this.storeHistory(historyData);
+            }
 
             if (!this.allowDownload) {
               event.preventDefault();
